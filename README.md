@@ -2,7 +2,7 @@
 
 As well as the annotated paper is attached to this repo
  
-### Papers logic
+## Papers logic
 
  - Pooling based LSTM umodel
  - video mostly exaplaning the logic behind LSTMs https://www.youtube.com/watch?v=YCzL96nL7j0 
