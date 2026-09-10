@@ -7,11 +7,7 @@ As well as the annotated paper is attached to this repo
  - Pooling based LSTM umodel
  - video mostly exaplaning the logic behind LSTMs https://www.youtube.com/watch?v=YCzL96nL7j0 
 ### Data sets
-
-
-
-two of the datasets that I have downloaded to implement this paper are located over here
-
+Data sets that have been used for training
  1. ETH Dataset and the link - https://mubbasir.github.io/HTP-benchmark/downloads/
  2. UCY Dataset and the link - https://opendatalab.com/OpenDataLab/UCY
 
