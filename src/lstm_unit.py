@@ -1,4 +1,4 @@
-# Basic containing the basic LSTM implementation 
+# Basic containing the basic LSTM implementation to study the overall works of the internal part of the research paper 
 
 from cProfile import label
 from enum import Enum
@@ -127,9 +127,3 @@ class LSTMUnit(L.LightningModule):
         self.log(f"training_loss{loss}, on the following batch index {self.training_stats.cur_batch_index}") 
         
         return loss
-
-
-
-
-
- 
