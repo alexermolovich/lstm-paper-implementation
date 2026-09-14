@@ -1,4 +1,5 @@
-# Basic containing the basic LSTM implementation to study the overall works of the internal part of the research paper 
+""" file containing the basic LSTM implementation to study the overall works of the internal part of the LSTM """ 
+
 
 from cProfile import label
 from enum import Enum

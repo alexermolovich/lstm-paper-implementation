@@ -1,7 +1,8 @@
-from lstm_unit import LSTMUnit
+from src.lstm_unit import LSTMUnit
 from torch import nn
 import torch
 import lightning as L 
+import math
 
 class SocialPooling(nn.Module):
     def __init__(self, spatial_size=32, grid_size=8, hidden_dim=128):
@@ -69,7 +70,8 @@ class SocialLSTM(L.LightningModule):
         hidden_dim=128,
         spatial_size=32,
         grid_size=8,
-        lr=0.003
+        lr=0.003,
+        t_obs=8,
     ):
         super(SocialLSTM, self).__init__()
         self.save_hyperparameters()
@@ -205,13 +207,31 @@ class SocialLSTM(L.LightningModule):
         """
         batch shape: (seq_len, num_peds, 2) where seq_len = T_obs + T_pred
         """
+        # DataLoader adds a scene batch dimension.  Scenes must be processed
+        # independently so pedestrians from different scenes are never pooled.
+        if batch.ndim == 4:
+            losses = [self._scene_loss(scene) for scene in batch]
+            loss = torch.stack(losses).mean()
+        elif batch.ndim == 3:
+            loss = self._scene_loss(batch)
+        else:
+            raise ValueError("Expected batch shape (batch, time, pedestrians, 2) or (time, pedestrians, 2)")
+
+        self.log("train_loss", loss, prog_bar=True, batch_size=batch.shape[0] if batch.ndim == 4 else 1)
+        return loss
+
+    def _scene_loss(self, batch):
+        """Compute teacher-forced next-position loss for one scene."""
         seq_len, num_peds, _ = batch.shape
         t_obs = self.hparams.get("t_obs", 8)  # Default: 8 observed frames (3.2s)
+
+        if seq_len <= t_obs:
+            raise ValueError(f"Sequence length ({seq_len}) must be greater than t_obs ({t_obs})")
 
         h = torch.zeros(num_peds, self.hidden_dim, device=batch.device)
         c = torch.zeros(num_peds, self.hidden_dim, device=batch.device)
 
-        loss = 0.0
+        losses = []
 
         for t in range(seq_len - 1):
             current_pos = batch[t]
@@ -222,10 +242,9 @@ class SocialLSTM(L.LightningModule):
             # Compute loss on steps after observation window (T_obs)
             if t >= t_obs - 1:
                 step_loss = self.bivariate_gaussian_loss(params, target_pos)
-                loss += step_loss
+                losses.append(step_loss)
 
-        self.log("train_loss", loss, prog_bar=True)
-        return loss
+        return torch.stack(losses).mean()
 
     def configure_optimizers(self):
         # RMSprop or Adam as described in Section 3.2 of the paper
